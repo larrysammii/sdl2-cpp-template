@@ -3,12 +3,16 @@
 #include <SDL2/SDL.h>
 #include "constants.hpp"
 
-int game_is_running = FALSE;
-SDL_Window *window = NULL;
-SDL_Renderer *renderer = NULL;
+struct GameState
+{
+    int game_is_running = FALSE;
+    SDL_Window *window = NULL;
+    SDL_Renderer *renderer = NULL;
 
-int last_frame_time = 0;
+    int last_frame_time = 0;
+} GameState;
 
+// Sample ball to fuck around.
 struct ball
 {
     float x;
@@ -25,7 +29,7 @@ int initialize_window(void)
         return FALSE;
     }
 
-    window = SDL_CreateWindow(
+    GameState.window = SDL_CreateWindow(
         "Game Title",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
@@ -33,15 +37,15 @@ int initialize_window(void)
         WINDOW_HEIGHT,
         SDL_WINDOW_BORDERLESS);
 
-    if (!window)
+    if (!GameState.window)
     {
         std::cout << "Error creating SDL window.\n";
         return FALSE;
     }
 
-    renderer = SDL_CreateRenderer(window, -1, 0);
+    GameState.renderer = SDL_CreateRenderer(GameState.window, -1, 0);
 
-    if (!renderer)
+    if (!GameState.renderer)
     {
         std::cout << "Error creating SDL renderer.\n";
         return FALSE;
@@ -58,12 +62,12 @@ void process_input()
     switch (event.type)
     {
     case SDL_QUIT:
-        game_is_running = FALSE;
+        GameState.game_is_running = FALSE;
         break;
 
     case SDL_KEYDOWN:
         if (event.key.keysym.sym == SDLK_ESCAPE)
-            game_is_running = FALSE;
+            GameState.game_is_running = FALSE;
         break;
     }
 }
@@ -83,17 +87,17 @@ void update()
     //     ;
 
     // Calculate how much we have to wait until we reach the target frame time
-    int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - last_frame_time);
+    int time_to_wait = FRAME_TARGET_TIME - (SDL_GetTicks() - GameState.last_frame_time);
 
     // Only call delay if we are too fast to process this frame
     if (time_to_wait > 0 && time_to_wait <= FRAME_TARGET_TIME)
         SDL_Delay(time_to_wait);
 
     // Get a delta time factor converted to seconds to be used to update my objects
-    float delta_time = (SDL_GetTicks() - last_frame_time) / 1000.0f;
+    float delta_time = (SDL_GetTicks() - GameState.last_frame_time) / 1000.0f;
 
     // Logic to keep a fixed timestamp
-    last_frame_time = SDL_GetTicks();
+    GameState.last_frame_time = SDL_GetTicks();
 
     ball.x += 50 * delta_time;
     ball.y += 50 * delta_time;
@@ -101,8 +105,8 @@ void update()
 
 void render()
 {
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(GameState.renderer, 0, 0, 0, 255);
+    SDL_RenderClear(GameState.renderer);
 
     // Draw the game here
     SDL_Rect ball_rect = {
@@ -111,26 +115,26 @@ void render()
         (int)ball.width,
         (int)ball.height};
 
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderFillRect(renderer, &ball_rect);
+    SDL_SetRenderDrawColor(GameState.renderer, 255, 255, 255, 255);
+    SDL_RenderFillRect(GameState.renderer, &ball_rect);
 
-    SDL_RenderPresent(renderer);
+    SDL_RenderPresent(GameState.renderer);
 }
 
 void destroy_window()
 {
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    SDL_DestroyRenderer(GameState.renderer);
+    SDL_DestroyWindow(GameState.window);
     SDL_Quit();
 }
 
 int main()
 {
-    game_is_running = initialize_window();
+    GameState.game_is_running = initialize_window();
 
     setup();
 
-    while (game_is_running)
+    while (GameState.game_is_running)
     {
         process_input();
         update();
